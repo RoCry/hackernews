@@ -39,12 +39,19 @@ class HackerNewsClient:
         url = f"{self.BASE_URL}/item/{item_id}.json"
         return await self._make_request(url)
 
+    # depth: 0 -> root comment
+    # fetch_comment_levels_count: how many levels of comments to fetch
+    #   0 -> do not fetch any comments, 1 only root comments, 2 -> root + first level of replies
     async def _ids_to_comments(
-        self, story_id: int, comment_ids: List[int], depth: int = 0, max_depth: int = 2
+        self,
+        story_id: int,
+        comment_ids: List[int],
+        depth: int = 0,
+        fetch_comment_levels_count: int = 2,
     ) -> List[Comment]:
         if not comment_ids:
             return []
-        if max_depth != 0 and depth > max_depth:
+        if fetch_comment_levels_count != 0 and depth >= fetch_comment_levels_count:
             return []
 
         logger.debug(f"GET S({story_id}) L{depth} comments: {len(comment_ids)}")
@@ -64,7 +71,10 @@ class HackerNewsClient:
                 continue
 
             child_comments = await self._ids_to_comments(
-                story_id, comment_data.get("kids", []), depth + 1, max_depth=max_depth
+                story_id,
+                comment_data.get("kids", []),
+                depth + 1,
+                fetch_comment_levels_count=fetch_comment_levels_count,
             )
 
             comment = Comment(
@@ -85,14 +95,18 @@ class HackerNewsClient:
     ############################################################
     # Public methods
     ############################################################
-    async def fetch_story(self, story_id: int, comment_depth: int = 2) -> Story:
+    async def fetch_story(
+        self, story_id: int, fetch_comment_levels_count: int = 2
+    ) -> Story:
         logger.debug(f"GET S({story_id})")
         story_data = await self._get_item(story_id)
         comments = []
-        if comment_depth != 0:
+        if fetch_comment_levels_count != 0:
             request_comments_ids = story_data.get("kids", [])
             comments = await self._ids_to_comments(
-                story_id, request_comments_ids, max_depth=comment_depth
+                story_id,
+                request_comments_ids,
+                fetch_comment_levels_count=fetch_comment_levels_count,
             )
 
         story = Story(
@@ -113,14 +127,18 @@ class HackerNewsClient:
         return story
 
     async def fetch_top_stories(
-        self, top_n: int = 10, comment_depth: int = 2
+        self, top_n: int = 10, fetch_comment_levels_count: int = 2
     ) -> HNResponse:
         logger.info(f"GET TOP {top_n} stories")
         story_ids = await self._get_top_story_ids(limit=top_n)
 
         tasks = []
         for story_id in story_ids:
-            tasks.append(self._id_to_story(story_id, comment_depth=comment_depth))
+            tasks.append(
+                self._id_to_story(
+                    story_id, fetch_comment_levels_count=fetch_comment_levels_count
+                )
+            )
 
         stories = await asyncio.gather(*tasks)
         logger.info(f"GET TOP {top_n} stories: {len(stories)}")

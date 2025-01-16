@@ -3,9 +3,9 @@ import fire
 from hackernews.client import HackerNewsClient
 
 
-async def main(story_id: int, max_length: int = 80) -> None:
+async def main(story_id: int, fetch_comment_levels_count: int = 5, max_length: int = 80) -> None:
     async with HackerNewsClient() as client:
-        story = await client.fetch_story(story_id=story_id, comment_depth=5)
+        story = await client.fetch_story(story_id=story_id, fetch_comment_levels_count=fetch_comment_levels_count)
         print(story.tree_string(max_length=max_length))
 
 

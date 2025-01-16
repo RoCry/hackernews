@@ -2,9 +2,9 @@ import asyncio
 from hackernews.client import HackerNewsClient
 
 
-async def fetch_top_stories(top_n: int = 10, comment_depth: int = 2):
+async def fetch_top_stories(top_n: int = 10, fetch_comment_levels_count: int = 2):
     async with HackerNewsClient() as client:
-        return await client.fetch_top_stories(top_n, comment_depth)
+        return await client.fetch_top_stories(top_n, fetch_comment_levels_count)
 
 
 def main() -> None:
