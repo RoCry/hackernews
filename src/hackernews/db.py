@@ -15,6 +15,11 @@ class HNCache:
     )
     """
 
+    CREATE_INDEX_SQL = f"""
+    CREATE INDEX IF NOT EXISTS idx_{ITEM_TABLE_NAME}_created_at 
+    ON {ITEM_TABLE_NAME}(created_at)
+    """
+
     def __init__(self, db_path: str = "hn_cache.sqlite3"):
         self.db_path = Path(db_path)
         self._db: Optional[aiosqlite.Connection] = None
@@ -30,6 +35,7 @@ class HNCache:
         """Connect to the database and initialize tables"""
         self._db = await aiosqlite.connect(self.db_path)
         await self._db.execute(self.CREATE_TABLE_SQL)
+        await self._db.execute(self.CREATE_INDEX_SQL)
         await self._db.commit()
 
     async def close(self):
@@ -59,5 +65,36 @@ class HNCache:
         await self._db.execute(
             f"INSERT OR REPLACE INTO {self.ITEM_TABLE_NAME} (id, data) VALUES (?, ?)",
             (item_id, json.dumps(data)),
+        )
+        await self._db.commit()
+
+    async def cleanup(self, before_days: Optional[int] = 30, before_id: Optional[int] = None):
+        """Clean up old cache entries.
+        
+        Args:
+            before_days: Delete entries older than this many days
+            before_id: Delete entries with id less than this value
+        """
+        if not self._db:
+            raise RuntimeError("Database not connected")
+
+        conditions = []
+        params = []
+
+        if before_days is not None:
+            conditions.append("created_at < datetime('now', ?)")
+            params.append(f'-{before_days} days')
+
+        if before_id is not None:
+            conditions.append("id < ?")
+            params.append(before_id)
+
+        if not conditions:
+            return
+
+        where_clause = " OR ".join(conditions)
+        await self._db.execute(
+            f"DELETE FROM {self.ITEM_TABLE_NAME} WHERE {where_clause}",
+            params
         )
         await self._db.commit() 
