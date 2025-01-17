@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import asyncio
 import httpx
 from .models import Story, Comment, HNResponse
 from .utils import normalize_html, logger
+from .db import HNCache
 
 
 class HackerNewsClient:
@@ -13,15 +14,21 @@ class HackerNewsClient:
         self,
         max_concurrent_requests: int = 5,
         timeout: float = 30.0,
+        cache_path: Optional[str] = None,
     ):
         self.semaphore = asyncio.Semaphore(max_concurrent_requests)
         self.timeout = timeout
         self.client = httpx.AsyncClient(timeout=timeout)
+        self.cache = HNCache(cache_path) if cache_path else None
 
     async def __aenter__(self):
+        if self.cache:
+            await self.cache.connect()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.cache:
+            await self.cache.close()
         await self.client.aclose()
 
     async def _make_request(self, url: str) -> Dict[str, Any]:
@@ -36,8 +43,22 @@ class HackerNewsClient:
         return story_ids[:limit]
 
     async def _get_item(self, item_id: int) -> Dict[str, Any]:
+        # Try to get from cache first
+        if self.cache:
+            cached_item = await self.cache.get_item(item_id)
+            if cached_item:
+                # logger.debug(f"Cache hit for item {item_id}")
+                return cached_item
+
+        # If not in cache or no cache configured, fetch from network
         url = f"{self.BASE_URL}/item/{item_id}.json"
-        return await self._make_request(url)
+        data = await self._make_request(url)
+        
+        # Save to cache if available
+        if self.cache and data:
+            await self.cache.save_item(item_id, data)
+            
+        return data
 
     # depth: 0 -> root comment
     # fetch_comment_levels_count: how many levels of comments to fetch
@@ -135,7 +156,7 @@ class HackerNewsClient:
         tasks = []
         for story_id in story_ids:
             tasks.append(
-                self._id_to_story(
+                self.fetch_story(
                     story_id, fetch_comment_levels_count=fetch_comment_levels_count
                 )
             )
