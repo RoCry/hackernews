@@ -8,8 +8,8 @@ async def fetch_top_stories(top_n: int = 10, fetch_comment_levels_count: int = 1
 
 
 async def main():
-    cache_path = "hn_cache.sqlite3"
-    async with HackerNewsClient(cache_path=cache_path) as client:
+    cache_db_path = "hn_cache.sqlite3"
+    async with HackerNewsClient(cache_db_path=cache_db_path) as client:
         response = await client.fetch_top_stories(top_n=10)
         for story in response.stories:
             print(story.tree_string())

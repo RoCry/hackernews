@@ -68,9 +68,11 @@ class HNCache:
         )
         await self._db.commit()
 
-    async def cleanup(self, before_days: Optional[int] = 30, before_id: Optional[int] = None):
+    async def cleanup(
+        self, before_days: Optional[int] = 30, before_id: Optional[int] = None
+    ):
         """Clean up old cache entries.
-        
+
         Args:
             before_days: Delete entries older than this many days
             before_id: Delete entries with id less than this value
@@ -83,7 +85,7 @@ class HNCache:
 
         if before_days is not None:
             conditions.append("created_at < datetime('now', ?)")
-            params.append(f'-{before_days} days')
+            params.append(f"-{before_days} days")
 
         if before_id is not None:
             conditions.append("id < ?")
@@ -94,7 +96,6 @@ class HNCache:
 
         where_clause = " OR ".join(conditions)
         await self._db.execute(
-            f"DELETE FROM {self.ITEM_TABLE_NAME} WHERE {where_clause}",
-            params
+            f"DELETE FROM {self.ITEM_TABLE_NAME} WHERE {where_clause}", params
         )
-        await self._db.commit() 
+        await self._db.commit()

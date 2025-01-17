@@ -14,12 +14,12 @@ class HackerNewsClient:
         self,
         max_concurrent_requests: int = 5,
         timeout: float = 30.0,
-        cache_path: Optional[str] = None,
+        cache_db_path: Optional[str] = None,
     ):
         self.semaphore = asyncio.Semaphore(max_concurrent_requests)
         self.timeout = timeout
         self.client = httpx.AsyncClient(timeout=timeout)
-        self.cache = HNCache(cache_path) if cache_path else None
+        self.cache = HNCache(cache_db_path) if cache_db_path else None
 
     async def __aenter__(self):
         if self.cache:
@@ -53,11 +53,11 @@ class HackerNewsClient:
         # If not in cache or no cache configured, fetch from network
         url = f"{self.BASE_URL}/item/{item_id}.json"
         data = await self._make_request(url)
-        
+
         # Save to cache if available
         if self.cache and data:
             await self.cache.save_item(item_id, data)
-            
+
         return data
 
     # depth: 0 -> root comment
