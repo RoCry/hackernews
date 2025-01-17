@@ -195,9 +195,9 @@ dev = [
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.20.0" },
     { name = "fire", marker = "extra == 'example'", specifier = ">=0.7.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "pydantic", specifier = ">=2.10.5" },
-    { name = "trafilatura", specifier = ">=2.0.0" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "pydantic", specifier = ">=2.10" },
+    { name = "trafilatura", specifier = ">=2.0" },
 ]
 
 [package.metadata.requires-dev]
