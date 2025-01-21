@@ -15,11 +15,12 @@ class HackerNewsClient:
         max_concurrent_requests: int = 5,
         timeout: float = 30.0,
         cache_db_path: Optional[str] = None,
+        cache_ttl_minutes: int = 5,
     ):
         self.semaphore = asyncio.Semaphore(max_concurrent_requests)
         self.timeout = timeout
         self.client = httpx.AsyncClient(timeout=timeout)
-        self.cache = HNCache(cache_db_path) if cache_db_path else None
+        self.cache = HNCache(cache_db_path, ttl_minutes=cache_ttl_minutes) if cache_db_path else None
 
     async def __aenter__(self):
         if self.cache:

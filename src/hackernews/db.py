@@ -20,8 +20,9 @@ class HNCache:
     ON {ITEM_TABLE_NAME}(created_at)
     """
 
-    def __init__(self, db_path: str = "hn_cache.sqlite"):
+    def __init__(self, db_path: str = "hn_cache.sqlite", ttl_minutes: int = 5):
         self.db_path = Path(db_path)
+        self.ttl_minutes = ttl_minutes
         self._db: Optional[aiosqlite.Connection] = None
 
     async def __aenter__(self):
@@ -50,7 +51,9 @@ class HNCache:
             raise RuntimeError("Database not connected")
 
         async with self._db.execute(
-            f"SELECT data FROM {self.ITEM_TABLE_NAME} WHERE id = ?", (item_id,)
+            f"""SELECT data FROM {self.ITEM_TABLE_NAME} 
+            WHERE id = ? AND created_at > datetime('now', ?)""",
+            (item_id, f"-{self.ttl_minutes} minutes"),
         ) as cursor:
             row = await cursor.fetchone()
             if row:
