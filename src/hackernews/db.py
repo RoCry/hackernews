@@ -2,6 +2,7 @@ import json
 import aiosqlite
 from typing import Optional, Dict, Any
 from pathlib import Path
+from datetime import datetime
 
 
 class HNCache:
@@ -20,9 +21,15 @@ class HNCache:
     ON {ITEM_TABLE_NAME}(created_at)
     """
 
-    def __init__(self, db_path: str = "hn_cache.sqlite", ttl_minutes: int = 5):
+    def __init__(
+        self,
+        db_path: str = "hn_cache.sqlite",
+        story_ttl_minutes: int = 5,
+        comment_ttl_minutes: int = 30,
+    ):
         self.db_path = Path(db_path)
-        self.ttl_minutes = ttl_minutes
+        self.story_ttl_minutes = story_ttl_minutes
+        self.comment_ttl_minutes = comment_ttl_minutes
         self._db: Optional[aiosqlite.Connection] = None
 
     async def __aenter__(self):
@@ -51,14 +58,28 @@ class HNCache:
             raise RuntimeError("Database not connected")
 
         async with self._db.execute(
-            f"""SELECT data FROM {self.ITEM_TABLE_NAME} 
-            WHERE id = ? AND created_at > datetime('now', ?)""",
-            (item_id, f"-{self.ttl_minutes} minutes"),
+            f"SELECT data, created_at FROM {self.ITEM_TABLE_NAME} WHERE id = ?",
+            (item_id,),
         ) as cursor:
             row = await cursor.fetchone()
-            if row:
-                return json.loads(row[0])
-            return None
+            if not row:
+                return None
+
+            data = json.loads(row[0])
+            created_at = datetime.fromisoformat(row[1])
+            now = datetime.now()
+            age_minutes = (now - created_at).total_seconds() / 60
+
+            # Check TTL based on item type
+            ttl = (
+                self.story_ttl_minutes
+                if data.get("type") == "story"
+                else self.comment_ttl_minutes
+            )
+            if age_minutes > ttl:
+                return None
+
+            return data
 
     async def save_item(self, item_id: int, data: Dict[str, Any]):
         """Save item to cache"""
