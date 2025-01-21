@@ -20,7 +20,7 @@ class HNCache:
     ON {ITEM_TABLE_NAME}(created_at)
     """
 
-    def __init__(self, db_path: str = "hn_cache.sqlite3"):
+    def __init__(self, db_path: str = "hn_cache.sqlite"):
         self.db_path = Path(db_path)
         self._db: Optional[aiosqlite.Connection] = None
 

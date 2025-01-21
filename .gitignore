@@ -10,4 +10,4 @@ wheels/
 .venv
 
 # Cache
-hn_cache.sqlite3
+hn_cache.sqlite
