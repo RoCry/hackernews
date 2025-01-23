@@ -19,7 +19,7 @@ class Comment(BaseModel):
         lines = []
         indent = "│  " * depth
         text = self.text[:max_length].replace("\n", f"\n{indent}│  ")
-        lines.append(f"{indent}├─ {self.by}: [{self.id}]{text}...")
+        lines.append(f"{indent}├─ {self.by}: {text}...")
 
         for reply in self.replies:
             lines.extend(reply.format_tree(max_length, depth + 1))
@@ -39,13 +39,13 @@ class Story(BaseModel):
     kids: List[int] = Field(default_factory=list)
     comments: List[Comment] = Field(default_factory=list)
 
-    def tree_string(self, max_length: int = 100) -> str:
+    def tree_string(self, max_length: int = 140) -> str:
         """Generate a tree-like string representation of the story and its comments."""
 
         lines = []
 
         # Story header
-        lines.append(f"\n{self.title}[{self.id}] by {self.by}")
+        lines.append(f"\n{self.title} by {self.by}")
         lines.append(f"Score: {self.score}, Comments: {self.descendants}")
         if self.url:
             lines.append(f"URL: {self.url}")
