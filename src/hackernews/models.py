@@ -15,15 +15,15 @@ class Comment(BaseModel):
     replies: List["Comment"] = Field(default_factory=list)
 
     def format_tree(self, max_length: int, depth: int = 0) -> List[str]:
-        """Recursively format this comment and its replies."""
         lines = []
-        indent = "│  " * depth
-        text = self.text[:max_length].replace("\n", f"\n{indent}│  ")
-        lines.append(f"{indent}├─ {self.by}: {text}...")
+        indent = "  " * depth
+        text = self.text[:max_length]
+        truncated_chars = max(0, len(self.text) - max_length)
+        text = text.replace("\n", f"\n{indent}  ")
+        lines.append(f"{indent}- {self.by}: {text}" + (f" [+{truncated_chars} chars]" if truncated_chars > 0 else ""))
 
         for reply in self.replies:
             lines.extend(reply.format_tree(max_length, depth + 1))
-
         return lines
 
 
