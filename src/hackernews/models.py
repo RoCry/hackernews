@@ -45,7 +45,8 @@ class Story(BaseModel):
         lines = []
 
         # Story header
-        lines.append(f"\n{self.title} by {self.by}")
+        lines.append(f"\n{self.title} by {self.by} @ {self.time.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"Content: {self.text if self.text else '[no text]'}")
         lines.append(f"Score: {self.score}, Comments: {self.descendants}")
         if self.url:
             lines.append(f"URL: {self.url}")
