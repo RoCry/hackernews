@@ -6,7 +6,7 @@ import os
 import sys
 
 logger = logging.getLogger(__name__)
-logger.setLevel(os.getenv("LOGLEVEL", "INFO"))
+logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
 
 # Add console handler if no handlers are configured
 if not logger.handlers:
