@@ -28,6 +28,8 @@ class HNCache:
         comment_ttl_minutes: int = 30,
     ):
         self.db_path = Path(db_path)
+        # create folder if not exists
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.story_ttl_minutes = story_ttl_minutes
         self.comment_ttl_minutes = comment_ttl_minutes
         self._db: Optional[aiosqlite.Connection] = None
