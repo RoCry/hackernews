@@ -20,7 +20,10 @@ class Comment(BaseModel):
         text = self.text[:max_length]
         truncated_chars = max(0, len(self.text) - max_length)
         text = text.replace("\n", f"\n{indent}  ")
-        lines.append(f"{indent}- {self.by}: {text}" + (f" [+{truncated_chars} chars]" if truncated_chars > 0 else ""))
+        lines.append(
+            f"{indent}- {self.by}: {text}"
+            + (f" [+{truncated_chars} chars]" if truncated_chars > 0 else "")
+        )
 
         for reply in self.replies:
             lines.extend(reply.format_tree(max_length, depth + 1))
@@ -45,7 +48,9 @@ class Story(BaseModel):
         lines = []
 
         # Story header
-        lines.append(f"\n{self.title} by {self.by} @ {self.time.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(
+            f"\n{self.title} by {self.by} @ {self.time.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
         lines.append(f"Content: {self.text if self.text else '[no text]'}")
         lines.append(f"Score: {self.score}, Comments: {self.descendants}")
         if self.url:

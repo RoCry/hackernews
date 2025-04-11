@@ -14,7 +14,9 @@ class HackerNewsClient:
         self,
         max_concurrent_requests: int = 5,
         timeout: float = 30.0,
-        cache_db_path: Optional[str] = None,
+        cache_db_path: Optional[
+            str
+        ] = None,  # will using cache if provided, e.g. "hn.sqlite"
     ):
         self.semaphore = asyncio.Semaphore(max_concurrent_requests)
         self.timeout = timeout
