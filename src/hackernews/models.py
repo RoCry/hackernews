@@ -17,8 +17,8 @@ class Comment(BaseModel):
     def format_tree(self, max_length: int, depth: int = 0) -> List[str]:
         lines = []
         indent = "  " * depth
-        text = self.text[:max_length]
-        truncated_chars = max(0, len(self.text) - max_length)
+        text = self.text[:max_length] if max_length > 0 else self.text
+        truncated_chars = max(0, len(self.text) - max_length) if max_length > 0 else 0
         text = text.replace("\n", f"\n{indent}  ")
         lines.append(
             f"{indent}- {self.by}: {text}"
